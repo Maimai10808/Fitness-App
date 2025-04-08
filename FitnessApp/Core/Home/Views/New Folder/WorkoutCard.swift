@@ -31,15 +31,14 @@ struct WorkoutCard: View {
                     
                     Spacer()
                     
-                    Text(workout.duration)
                 }
                 
                 HStack {
-                    Text(workout.date)
+                    Text(workout.duration)
                     
                     Spacer()
                     
-                    Text(workout.duration)
+                    Text("\(workout.calories) kcal")
                 }
             }
         }
