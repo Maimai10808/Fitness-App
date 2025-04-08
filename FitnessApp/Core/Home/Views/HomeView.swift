@@ -26,6 +26,17 @@ struct HomeView: View {
                     
                     VStack  {
                         VStack(alignment: .leading,spacing: 8) {
+                            Text("Steps")
+                                .font(.callout)
+                                .bold()
+                                .foregroundStyle(.purple)
+                            
+                            Text("\(viewModel.steps)")
+                                .bold()
+                        }
+                        .padding(.bottom)
+                        
+                        VStack(alignment: .leading,spacing: 8) {
                             Text("calories")
                                 .font(.callout)
                                 .bold()
@@ -63,13 +74,16 @@ struct HomeView: View {
                     Spacer()
                     
                     ZStack {
-                        ProgressCircleView(progress: $viewModel.calories, goal: 600, color: .red)
+                        ProgressCircleView(progress: $viewModel.steps, goal: 10000, color: .purple)
                         
-                        ProgressCircleView(progress: $viewModel.exercise, goal: 60, color: .green)
+                        ProgressCircleView(progress: $viewModel.calories, goal: 600, color: .red)
                             .padding(.all, 20)
                         
-                        ProgressCircleView(progress: $viewModel.stand, goal: 12, color: .blue)
+                        ProgressCircleView(progress: $viewModel.exercise, goal: 60, color: .green)
                             .padding(.all, 40)
+                        
+                        ProgressCircleView(progress: $viewModel.stand, goal: 12, color: .blue)
+                            .padding(.all, 60)
                         
                     }
                     .padding(.horizontal)

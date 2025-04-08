@@ -16,6 +16,7 @@ class HomeViewModel: ObservableObject {
     @Published var calories: Int = 0
     @Published var exercise: Int = 0
     @Published var stand   : Int = 0
+    @Published var steps: Int = 0
     
     var mockActivites = [
         Activity(title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .green, amount: "9812"),
@@ -35,15 +36,17 @@ class HomeViewModel: ObservableObject {
     init() {
         Task {
             do {
-                try await
-                
-                    healthManager.requestHealthKitAccess()
+                try await healthManager.requestHealthKitAccess()
+                // Wait a short moment to ensure authorization is complete
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+                await MainActor.run {
                     fetchTodayCalories()
                     fetchTodayExerciseTime()
                     fetchTodayStandHour()
-                
+                    fetchTodaySteps()
+                }
             } catch {
-                print(error.localizedDescription)
+                print("HealthKit authorization error: \(error.localizedDescription)")
             }
         }
     }
@@ -86,6 +89,19 @@ class HomeViewModel: ObservableObject {
             case .failure(let failure):
                 print(failure.localizedDescription)
                 
+            }
+        }
+    }
+    
+    func fetchTodaySteps() {
+        healthManager.fetchTodaysSteps { result in
+            switch result {
+            case .success(let steps):
+                DispatchQueue.main.async {
+                    self.steps = Int(steps)
+                }
+            case .failure(let failure):
+                print("Steps fetch error: \(failure.localizedDescription)")
             }
         }
     }

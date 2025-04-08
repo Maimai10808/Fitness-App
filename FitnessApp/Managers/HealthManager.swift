@@ -52,17 +52,18 @@ class HealthManager {
         let calories = HKQuantityType(.activeEnergyBurned)
         let predicate = HKQuery.predicateForSamples(withStart: .startOfDay, end: Date())
         let query = HKStatisticsQuery(quantityType: calories, quantitySamplePredicate: predicate) { _, results, error in
-            guard let quantity = results?.sumQuantity(), error == nil else {
-                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "An error occurred"])))
+            if let error = error {
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "Error: \(error.localizedDescription)"])))
                 return
             }
             
             guard let quantity = results?.sumQuantity() else {
-                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "No stand data available"])))
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "No calories data available"])))
                 return
             }
             
             let calorieCount = quantity.doubleValue(for: .kilocalorie())
+            print("Calories data: \(calorieCount) kcal")
             completion(.success(calorieCount))
         }
         
@@ -73,17 +74,18 @@ class HealthManager {
         let exercise = HKQuantityType(.appleExerciseTime)
         let predicate = HKQuery.predicateForSamples(withStart: .startOfDay, end: Date())
         let query = HKStatisticsQuery(quantityType: exercise, quantitySamplePredicate: predicate) { _, results, error in
-            guard let quantity = results?.sumQuantity(), error == nil else {
-                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "An error occurred"])))
+            if let error = error {
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "Error: \(error.localizedDescription)"])))
                 return
             }
             
             guard let quantity = results?.sumQuantity() else {
-                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "No stand data available"])))
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "No exercise data available"])))
                 return
             }
             
             let exerciseCount = quantity.doubleValue(for: .minute())
+            print("Exercise data: \(exerciseCount) minutes")
             completion(.success(exerciseCount))
         }
         
@@ -163,8 +165,26 @@ class HealthManager {
         ]
     }
     
-    func fetchTodaysSteps() {
+    func fetchTodaysSteps(completion: @escaping(Result<Double, Error>) -> Void) {
+        let steps = HKQuantityType(.stepCount)
+        let predicate = HKQuery.predicateForSamples(withStart: .startOfDay, end: Date())
+        let query = HKStatisticsQuery(quantityType: steps, quantitySamplePredicate: predicate) { _, results, error in
+            if let error = error {
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "Error: \(error.localizedDescription)"])))
+                return
+            }
+            
+            guard let quantity = results?.sumQuantity() else {
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "No steps data available"])))
+                return
+            }
+            
+            let stepsCount = quantity.doubleValue(for: .count())
+            print("Steps data: \(stepsCount) steps")
+            completion(.success(stepsCount))
+        }
         
+        healthStore.execute(query)
     }
    
 }
