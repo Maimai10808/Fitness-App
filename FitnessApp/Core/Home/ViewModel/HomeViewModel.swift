@@ -17,12 +17,13 @@ class HomeViewModel: ObservableObject {
     @Published var exercise: Int = 0
     @Published var stand   : Int = 0
     @Published var steps: Int = 0
+    @Published var workouts = [Workout]()
     
     var mockActivites = [
-        Activity(title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .green, amount: "9812"),
-        Activity(title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .blue, amount: "9812"),
-        Activity(title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .yellow, amount: "9812"),
-        Activity(title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .pink, amount: "9812")
+        Activity(id: 1, title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .green, amount: "9812"),
+        Activity(id: 2, title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .blue, amount: "9812"),
+        Activity(id: 3, title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .yellow, amount: "9812"),
+        Activity(id: 4, title: "Today steps", subtitle: "Goal 12,000", image: "figure.walk", tintColor: .pink, amount: "9812")
         
     ]
     
@@ -44,6 +45,7 @@ class HomeViewModel: ObservableObject {
                     fetchTodayExerciseTime()
                     fetchTodayStandHour()
                     fetchTodaySteps()
+                    fetchRecentWorkouts()
                 }
             } catch {
                 print("HealthKit authorization error: \(error.localizedDescription)")
@@ -103,6 +105,20 @@ class HomeViewModel: ObservableObject {
             case .failure(let failure):
                 print("Steps fetch error: \(failure.localizedDescription)")
             }
+        }
+    }
+    
+    func fetchRecentWorkouts() {
+        healthManager.fetchWorkoutsForMonth(month: Date()) { result in
+            switch result {
+            case .success(let workouts):
+                DispatchQueue.main.async {
+                    self.workouts = Array(workouts.prefix(4))
+                }
+            case .failure(let failure):
+                print("Workouts fetch error: \(failure.localizedDescription)")
+            }
+            
         }
     }
     
