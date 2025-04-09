@@ -275,3 +275,70 @@ class HealthManager {
     }
    
 }
+
+extension HealthManager {
+    
+    struct YearchartDataResult {
+        let ytd: [MonthlyStepModel]
+        let oneYear: [MonthlyStepModel]
+    }
+    
+    func fetchYTDAndOneYearChartData(completion: @escaping (Result<YearchartDataResult, Error>) -> Void) {
+        let steps = HKQuantityType(.stepCount)
+        let calendar = Calendar.current
+        
+        var oneYearMonths = [MonthlyStepModel]()
+        var ytdMonths = [MonthlyStepModel]()
+        
+        let group = DispatchGroup()
+        let queue = DispatchQueue(label: "com.fitnessapp.healthdata", qos: .userInitiated)
+        
+        for i in 0...11 {
+            group.enter()
+            queue.async {
+                let month = calendar.date(byAdding: .month, value: -i, to: Date()) ?? Date()
+                let (startOfMonth, endOfMonth) = month.fetchMonthStartAndEndDate()
+                
+                let predicate = HKQuery.predicateForSamples(withStart: startOfMonth, end: endOfMonth)
+                
+                let query = HKStatisticsQuery(quantityType: steps, quantitySamplePredicate: predicate) { _, results, error in
+                    defer { group.leave() }
+                    
+                    if let error = error {
+                        print("Error fetching steps for month \(month): \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    guard let quantity = results?.sumQuantity() else {
+                        print("No step data available for month \(month)")
+                        return
+                    }
+                    
+                    let stepCount = quantity.doubleValue(for: .count())
+                    let monthModel = MonthlyStepModel(date: startOfMonth, count: Int(stepCount))
+                    
+                    queue.async {
+                        oneYearMonths.append(monthModel)
+                        
+                        // Check if this month is in the current year for YTD data
+                        if calendar.component(.year, from: month) == calendar.component(.year, from: Date()) {
+                            ytdMonths.append(monthModel)
+                        }
+                    }
+                }
+                
+                self.healthStore.execute(query)
+            }
+        }
+        
+        group.notify(queue: queue) {
+            // Sort the arrays by date
+            oneYearMonths.sort { $0.date < $1.date }
+            ytdMonths.sort { $0.date < $1.date }
+            
+            completion(.success(YearchartDataResult(ytd: ytdMonths, oneYear: oneYearMonths)))
+        }
+    }
+    
+    
+}

@@ -31,35 +31,11 @@ class ChartsViewModel: ObservableObject {
     @Published var threeMonthAverage = 0
     @Published var threeMonthTotal = 0
     
-    @Published var mockYTDChartData = [
-        MonthlyStepModel(date: Date(), count: 12315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date(), count: 93315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -2, to: Date()) ?? Date(), count: 69315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date(), count: 79315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -4, to: Date()) ?? Date(), count: 59315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -5, to: Date()) ?? Date(), count: 99315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date(), count: 49315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -7, to: Date()) ?? Date(), count: 29315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date(), count: 89315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -9, to: Date()) ?? Date(), count: 99315),
-    ]
+    @Published var ytdChartData = [MonthlyStepModel]()
     @Published var ytdAverage = 0
     @Published var ytdTotal = 0
     
-    @Published var mockOneYearData = [
-        MonthlyStepModel(date: Date(), count: 12315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date(), count: 93315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -2, to: Date()) ?? Date(), count: 69315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date(), count: 79315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -4, to: Date()) ?? Date(), count: 59315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -5, to: Date()) ?? Date(), count: 99315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date(), count: 49315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -7, to: Date()) ?? Date(), count: 29315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -8, to: Date()) ?? Date(), count: 89315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -9, to: Date()) ?? Date(), count: 99315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -10, to: Date()) ?? Date(), count: 29315),
-        MonthlyStepModel(date: Calendar.current.date(byAdding: .month, value: -11, to: Date()) ?? Date(), count: 39315),
-    ]
+    @Published var oneYearChartData = [MonthlyStepModel]()
     @Published var oneYearAverage = 0
     @Published var oneYearTotal = 0
     
@@ -75,6 +51,7 @@ class ChartsViewModel: ObservableObject {
         }
         
         fetchWeeklySteps()
+        fetchYTDAndOneYearChartData()
     }
     
     func mockDataForDays(days: Int) -> [DailyStepModel] {
@@ -100,4 +77,27 @@ class ChartsViewModel: ObservableObject {
             }
         }
     }
+    
+    func fetchYTDAndOneYearChartData() {
+        healthManager.fetchYTDAndOneYearChartData { result in
+            switch result {
+            case .success(let result):
+                DispatchQueue.main.async {
+                    self.ytdChartData = result.ytd
+                    self.oneYearChartData = result.oneYear
+                    
+                    self.ytdTotal = self.ytdChartData.reduce(0, { $0 + $1.count})
+                    self.oneYearTotal = self.oneYearChartData.reduce(0, { $0 + $1.count})
+                    
+                    self.ytdAverage = self.ytdTotal / Calendar.current.component(.month, from: Date())
+                    self.oneYearAverage = self.oneYearTotal / 12
+                }
+            case .failure(let error):
+                print("Error fetching YTDAndOneYearChartData : \(error.localizedDescription)")
+            }
+            
+        }
+    }
+    
+    
 }
