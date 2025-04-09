@@ -264,7 +264,7 @@ class HealthManager {
             results.enumerateStatistics(from: .startOfWeek, to: Date()) { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let steps = quantity.doubleValue(for: .count())
-                    dailySteps.append(DailyStepModel(date: statistics.startDate, count: steps))
+                    dailySteps.append(DailyStepModel(date: statistics.startDate, count: Int(steps)))
                 }
             }
             

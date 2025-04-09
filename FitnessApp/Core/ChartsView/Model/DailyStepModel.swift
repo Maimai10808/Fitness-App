@@ -10,13 +10,13 @@ import Foundation
 struct DailyStepModel: Identifiable {
     let id = UUID()
     let date: Date
-    let count: Double
+    let count: Int
 }
 
 struct MonthlyStepModel: Identifiable {
     let id = UUID()
     let date: Date
-    let count: Double
+    let count: Int
 }
 
 enum ChartOptions: String, CaseIterable {
