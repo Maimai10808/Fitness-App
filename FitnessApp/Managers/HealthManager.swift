@@ -236,5 +236,42 @@ class HealthManager {
         
         healthStore.execute(query)
     }
+    
+    func fetchWeeklySteps(completion: @escaping(Result<[DailyStepModel], Error>) -> Void) {
+        let steps = HKQuantityType(.stepCount)
+        let predicate = HKQuery.predicateForSamples(withStart: .startOfWeek, end: Date())
+        let query = HKStatisticsCollectionQuery(
+            quantityType: steps,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum,
+            anchorDate: .startOfWeek,
+            intervalComponents: DateComponents(day: 1)
+        )
+        
+        query.initialResultsHandler = { query, results, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let results = results else {
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [NSLocalizedDescriptionKey: "No step data available"])))
+                return
+            }
+            
+            var dailySteps: [DailyStepModel] = []
+            
+            results.enumerateStatistics(from: .startOfWeek, to: Date()) { statistics, _ in
+                if let quantity = statistics.sumQuantity() {
+                    let steps = quantity.doubleValue(for: .count())
+                    dailySteps.append(DailyStepModel(date: statistics.startDate, count: steps))
+                }
+            }
+            
+            completion(.success(dailySteps))
+        }
+        
+        healthStore.execute(query)
+    }
    
 }
