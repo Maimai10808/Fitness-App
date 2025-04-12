@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCjNV4j1J7TtfcDRG4cGr9Fy99q6iEke6Y</string>
+	<string>private-GooleApi</string>
 	<key>GCM_SENDER_ID</key>
 	<string>419620965173</string>
 	<key>PLIST_VERSION</key>
