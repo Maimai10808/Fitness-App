@@ -34,7 +34,7 @@ struct LeaderboardView: View {
             LazyVStack(spacing: 16) {
                 ForEach(viewModel.mockData) { person in
                     HStack {
-                        Text("\(person.id).")
+                        Text("1.")
                         
                         Text(person.username)
                         
@@ -52,6 +52,17 @@ struct LeaderboardView: View {
         .fullScreenCover(isPresented: $showTerms) {
             TermsView()
         }
+        .task {
+            do {
+                try await DatabaseManager.shared.postStepCountUpdateFor(username: "jason", count: 1240)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        .onAppear {
+            print( Date().MondayDateFormat() )
+        }
+        
     }
 }
 

@@ -8,8 +8,7 @@
 import Foundation
 
 struct LeaderboardUser: Codable, Identifiable {
-    let id: Int
-    let createdAt: String
+    var id = UUID()
     let username: String
     let count: Int
 }
