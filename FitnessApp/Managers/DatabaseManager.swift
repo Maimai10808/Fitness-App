@@ -26,14 +26,10 @@ class DatabaseManager {
     }
     
     // Post (Update) Leaderboards for current user
-    func postStepCountUpdateFor(username: String, count: Int) async throws {
-        let leader = LeaderboardUser(username: username, count: count)
+    func postStepCountUpdateFor(leader: LeaderboardUser) async throws {
         let data = try Firestore.Encoder().encode(leader)
-        
-        try await database.collection(weeklyLeaderboard).document(username).setData(data, merge: false)
+        try await database.collection(weeklyLeaderboard).document(leader.username).setData(data, merge: false)
     }
-    
-    
 }
 
 

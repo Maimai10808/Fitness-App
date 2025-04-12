@@ -32,7 +32,7 @@ struct LeaderboardView: View {
             .padding()
             
             LazyVStack(spacing: 16) {
-                ForEach(viewModel.mockData) { person in
+                ForEach(viewModel.leaders) { person in
                     HStack {
                         Text("1.")
                         
