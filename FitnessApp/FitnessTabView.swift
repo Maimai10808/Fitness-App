@@ -6,9 +6,16 @@
 //
 
 import SwiftUI
+import RevenueCat
 
 struct FitnessTabView: View {
     @State var selectedTab = "Home"
+    
+    @AppStorage("username") var username: String?
+    
+    @State var isPremium = false
+    
+    @State var showTerms = true
     
     init() {
         let appearance = UITabBarAppearance()
@@ -36,7 +43,20 @@ struct FitnessTabView: View {
                     Text("Charts")
                 }
             
-            
+            LeaderboardView(showTerms: $showTerms)
+                .tag("Leaderboard")
+                .tabItem {
+                    Image(systemName: "list.bullet")
+                    
+                    Text("Leaderboard")
+                }
+        }
+        .onAppear {
+            showTerms = username == nil
+            Purchases.shared.getCustomerInfo {
+                CustomerInfo, error in
+                isPremium = CustomerInfo?.entitlements["premium"]?.isActive == true
+            }
         }
     }
 }
