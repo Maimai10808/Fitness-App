@@ -52,6 +52,7 @@ struct FitnessTabView: View {
                 }
         }
         .onAppear {
+            print(username)
             showTerms = username == nil
             Purchases.shared.getCustomerInfo {
                 CustomerInfo, error in

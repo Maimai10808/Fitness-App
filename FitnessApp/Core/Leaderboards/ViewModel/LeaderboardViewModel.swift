@@ -10,16 +10,16 @@ import Foundation
 
 class LeaderboardViewModel: ObservableObject {
     
-    @Published var leaders = [LeaderboardUser]()
+    @Published var leaderResult = LeaderboardResult(user: nil, top10: [])
     
     init() {
         Task {
             do {
-                try await postStepCountUpdateForUser(username: "Xcode", count: 123)
+                try await postStepCountUpdateForUser(username: "xcode", count: 123)
                 let result = try await fetchLeaerboards()
                 
                 DispatchQueue.main.async {
-                    self.leaders = result.top10
+                    self.leaderResult = result
                 }
             } catch {
                 print(error.localizedDescription)
@@ -35,17 +35,24 @@ class LeaderboardViewModel: ObservableObject {
     // fetch
     func fetchLeaerboards() async throws -> LeaderboardResult {
         let leaders = try await DatabaseManager.shared.fetchLeaderboards()
+        print("Leaders data: \(leaders)")
+        
+        // 排序并获取前10
         let top10 = Array(leaders.sorted(by: { $0.count > $1.count }).prefix(10))
         let username = UserDefaults.standard.string(forKey: "username")
+        print("Stored username: \(String(describing: username))")
         
-        if let username = username {
-            let user = leaders.first(where: { $0.username == username})
+        // 确保比较时忽略大小写
+        if let username = username?.lowercased() {
+            // 查找所有用户而不仅仅是top10
+            let user = leaders.first(where: { $0.username.lowercased() == username })
+            print("Found user: \(String(describing: user?.username))")
             return LeaderboardResult(user: user, top10: top10)
         } else {
+            print("No user data found")
             return LeaderboardResult(user: nil, top10: top10)
         }
     }
-    
     // update
     func postStepCountUpdateForUser(username: String, count: Int) async throws {
         try await DatabaseManager.shared.postStepCountUpdateFor(leader: LeaderboardUser(username: username, count: count))

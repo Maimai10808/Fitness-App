@@ -9,6 +9,7 @@ import SwiftUI
 import Foundation
 
 struct LeaderboardView: View {
+    @AppStorage("username") var username: String?
     
     @StateObject var viewModel = LeaderboardViewModel()
         
@@ -31,29 +32,57 @@ struct LeaderboardView: View {
             }
             .padding()
             
-            LazyVStack(spacing: 16) {
-                ForEach(viewModel.leaders) { person in
-                    HStack {
-                        Text("1.")
-                        
-                        Text(person.username)
-                        
-                        Spacer()
-                        
-                        Text("\(person.count)")
+            ScrollView {
+                LazyVStack(spacing: 24) {
+                    // 显示前10名用户
+                    ForEach(Array(viewModel.leaderResult.top10.enumerated()), id: \.element.id) { (idx, person) in
+                        HStack {
+                            Text("\(idx + 1).")
+                                .frame(width: 30)
+                            
+                            Text(person.username)
+                            
+                            if idx == 0 {
+                                Image(systemName: "crown.fill")
+                                    .foregroundStyle(.yellow)
+                            }
+                            
+                            Spacer()
+                            
+                            Text("\(person.count)")
+                        }
+                        .padding(.horizontal)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(8)
                     }
-                    .padding(.horizontal)
+                    
+                    // 显示其他用户
+                    if let user = viewModel.leaderResult.user {
+                        Image(systemName: "ellipsis")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 48, height: 48)
+                            .foregroundStyle(.gray.opacity(0.5))
+                            .padding(.vertical)
+                        
+                        HStack {
+                            Text(user.username)
+                            Spacer()
+                            Text("\(user.count)")
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(8)
+                    }
                 }
             }
-            
-            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding()
         .fullScreenCover(isPresented: $showTerms) {
             TermsView()
         }
-        
-        
     }
 }
 
