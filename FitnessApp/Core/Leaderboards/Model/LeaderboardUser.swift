@@ -12,3 +12,8 @@ struct LeaderboardUser: Codable, Identifiable {
     let username: String
     let count: Int
 }
+
+struct LeaderboardResult {
+    let user: LeaderboardUser?
+    let top10: [LeaderboardUser]
+}

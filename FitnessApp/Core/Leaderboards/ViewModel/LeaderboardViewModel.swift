@@ -31,11 +31,6 @@ class LeaderboardViewModel: ObservableObject {
         }
     }
     
-    struct LeaderboardResult {
-        let user: LeaderboardUser?
-        let top10: [LeaderboardUser]
-    }
-    
     // fetch
     private func fetchLeaerboards() async throws -> LeaderboardResult {
         let leaders = try await DatabaseManager.shared.fetchLeaderboards()
