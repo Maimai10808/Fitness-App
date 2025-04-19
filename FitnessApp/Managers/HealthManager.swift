@@ -308,5 +308,49 @@ extension HealthManager {
         }
     }
     
+    // 从 HealthKit 中获取今天的步数数据。
+    // 注意：传入的参数 fetchCurrentWeekStepCount 实际上作为 completion handler 使用，
+    // 建议统一更名为 completion 以提高代码可读性。
+    func fetchCurrentWeekStepCount(completion: @escaping (Result<Double, Error>) -> Void) {
+        // 创建表示步数的 HKQuantityType 对象
+        let steps = HKQuantityType(.stepCount)
+        
+        // 构建时间谓词，用于限定查询时间范围：从今天零时到当前时刻
+        let predicate = HKQuery.predicateForSamples(withStart: .startOfWeek, end: Date())
+        
+        // 创建一个统计查询，统计符合条件的步数样本数据的总和
+        let query = HKStatisticsQuery(quantityType: steps, quantitySamplePredicate: predicate) { _, results, error in
+            // 如果查询过程中发生错误，则调用 completion handler 并返回错误信息
+            if let error = error {
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [
+                    NSLocalizedDescriptionKey: "Error: \(error.localizedDescription)"
+                ])))
+                return
+            }
+                    
+            // 从查询结果中获取总步数数据；如果结果为空，则返回错误
+            guard let quantity = results?.sumQuantity() else {
+                completion(.failure(NSError(domain: "com.yourdomain.app", code: 0, userInfo: [
+                    NSLocalizedDescriptionKey: "No steps data available"
+                ])))
+                return
+            }
+                    
+            // 将获取到的步数数据转换为 Double 类型
+            let steps = quantity.doubleValue(for: .count())
+            
+            // 打印步数数据到控制台，方便调试
+            print("Steps data: \(steps) steps")
+            
+            // 通过 completion handler 返回步数数据
+            completion(.success(steps))
+        }
+                
+        // 将创建的查询交给 HealthKit 的 healthStore 执行
+        healthStore.execute(query)
+    }
+    
     
 }
+
+    

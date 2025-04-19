@@ -59,7 +59,7 @@ extension Date {
     
     
     func MondayDateFormat() -> String {
-        let monday = self.fetchPreviousMonday()
+        let monday = Date.startOfWeek
         let formatter = DateFormatter()
         formatter.dateFormat = "MM-dd-yyyy"
         return formatter.string(from: monday)

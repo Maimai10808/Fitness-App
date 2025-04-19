@@ -15,15 +15,19 @@ class LeaderboardViewModel: ObservableObject {
     init() {
         Task {
             do {
-                try await postStepCountUpdateForUser(username: "xcode", count: 123)
-                let result = try await fetchLeaerboards()
-                
-                DispatchQueue.main.async {
-                    self.leaderResult = result
-                }
+                try await setupLeaderboardData()
+
             } catch {
                 print(error.localizedDescription)
             }
+        }
+    }
+    
+    func setupLeaderboardData() async throws {
+        try await postStepCountUpdateForUser()
+        let result = try await fetchLeaerboards()
+        DispatchQueue.main.async {
+            self.leaderResult = result
         }
     }
     
@@ -33,7 +37,7 @@ class LeaderboardViewModel: ObservableObject {
     }
     
     // fetch
-    func fetchLeaerboards() async throws -> LeaderboardResult {
+    private func fetchLeaerboards() async throws -> LeaderboardResult {
         let leaders = try await DatabaseManager.shared.fetchLeaderboards()
         print("Leaders data: \(leaders)")
         
@@ -54,8 +58,21 @@ class LeaderboardViewModel: ObservableObject {
         }
     }
     // update
-    func postStepCountUpdateForUser(username: String, count: Int) async throws {
-        try await DatabaseManager.shared.postStepCountUpdateFor(leader: LeaderboardUser(username: username, count: count))
+    private func postStepCountUpdateForUser() async throws {
+        guard let username = UserDefaults.standard.string(forKey: "username") else {
+            throw URLError(.badURL)
+        }
+        let steps = try await fetchCurrentWeekStepCount()
+        try await DatabaseManager.shared.postStepCountUpdateFor(leader: LeaderboardUser(username: username, count: Int(steps)))
+    }
+    
+    
+    private func fetchCurrentWeekStepCount() async throws -> Double {
+        try await withCheckedThrowingContinuation({ continuation in
+            HealthManager.shared.fetchCurrentWeekStepCount { result in
+                continuation.resume(with: result)
+            }
+        })
     }
     
     var mockData = [
