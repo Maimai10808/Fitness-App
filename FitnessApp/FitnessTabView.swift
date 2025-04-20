@@ -50,6 +50,14 @@ struct FitnessTabView: View {
                     
                     Text("Leaderboard")
                 }
+            
+            ProfileView()
+                .tag("Profile")
+                .tabItem {
+                    Image(systemName: "person")
+                    
+                    Text("Profile")
+                }
         }
         .onAppear {
             print(username)
