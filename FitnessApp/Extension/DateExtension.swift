@@ -17,11 +17,11 @@ extension Date {
     }
     
     static var startOfWeek: Date {
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
-        components.weekday = 2
-        return calendar.date(from: components) ?? Date()
-    }
+            Calendar.current.dateInterval(of: .weekOfYear, for: Date())?.start
+            ?? Date()
+        }
+    
+    
     
     func fetchMonthStartAndEndDate() -> (Date, Date) {
         let calendar = Calendar.current
