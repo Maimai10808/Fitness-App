@@ -8,10 +8,6 @@
 import Foundation
 import HealthKit
 
-
-
-
-
 class HealthManager {
     
     static let shared = HealthManager()
@@ -153,12 +149,12 @@ class HealthManager {
     
     func generateActivitiesFromDurations(running: Int, strengthstrength: Int, soccer: Int, basketball: Int, stairs: Int, kickboxing: Int) -> [Activity] {
         return [
-            Activity(id: 1, title: "Running", subtitle: "Goal 12,000", image: "figure.run", tintColor: .green, amount: "\(running)"),
-            Activity(id: 2, title: "Strength Training", subtitle: "Goal 12,000", image: "figure.strengthtraining.traditional", tintColor: .blue, amount: "\(strengthstrength)"),
-            Activity(id: 3, title: "Soccer", subtitle: "Goal 12,000", image: "figure.indoor.soccer", tintColor: .yellow, amount: "\(soccer)"),
-            Activity(id: 4, title: "Basketball", subtitle: "Goal 12,000", image: "figure.basketball", tintColor: .pink, amount: "\(basketball)"),
-            Activity(id: 5, title: "Stairs", subtitle: "Goal 12,000", image: "figure.stairs", tintColor: .pink, amount: "\(stairs)"),
-            Activity(id: 6, title: "Kickboxing", subtitle: "Goal 12,000", image: "ffigure.kickboxing", tintColor: .pink, amount: "\(kickboxing)")
+            Activity(title: "Running", subtitle: "Goal 12,000", image: "figure.run", tintColor: .green, amount: "\(running)"),
+            Activity(title: "Strength Training", subtitle: "Goal 12,000", image: "figure.strengthtraining.traditional", tintColor: .blue, amount: "\(strengthstrength)"),
+            Activity(title: "Soccer", subtitle: "Goal 12,000", image: "figure.indoor.soccer", tintColor: .yellow, amount: "\(soccer)"),
+            Activity(title: "Basketball", subtitle: "Goal 12,000", image: "figure.basketball", tintColor: .pink, amount: "\(basketball)"),
+            Activity(title: "Stairs", subtitle: "Goal 12,000", image: "figure.stairs", tintColor: .pink, amount: "\(stairs)"),
+            Activity(title: "Kickboxing", subtitle: "Goal 12,000", image: "ffigure.kickboxing", tintColor: .pink, amount: "\(kickboxing)")
         ]
     }
     
@@ -176,7 +172,7 @@ class HealthManager {
                 return
             }
             
-            let workoutsArray = workouts.map( { Workout(id: nil, title: $0.workoutActivityType.name, image: $0.workoutActivityType.image, duration: "\(Int($0.duration) / 60 ) mins", date: $0.startDate.formatWorkoutDate(), calories: $0.totalEnergyBurned?.doubleValue(for: .kilocalorie()).formatted() ?? "-", tintColor: $0.workoutActivityType.color)})
+            let workoutsArray = workouts.map( { Workout(title: $0.workoutActivityType.name, image: $0.workoutActivityType.image, duration: "\(Int($0.duration) / 60 ) mins", date: $0.startDate.formatWorkoutDate(), calories: $0.totalEnergyBurned?.doubleValue(for: .kilocalorie()).formatted() ?? "-", tintColor: $0.workoutActivityType.color)})
             
             completion(.success(workoutsArray))
         }

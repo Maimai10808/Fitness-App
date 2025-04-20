@@ -112,7 +112,7 @@ struct HomeView: View {
                 .padding(.horizontal)
                 
                 LazyVGrid(columns: Array(repeating: GridItem(spacing: 20), count: 2)) {
-                    ForEach(viewModel.mockActivites, id: \.title) {
+                    ForEach(viewModel.activities, id: \.title) {
                         activity in
                         ActivityCard(activity: activity)
                     }
@@ -147,6 +147,17 @@ struct HomeView: View {
          }
       }
     }
+    .alert("Oops",
+           isPresented: $viewModel.presentError) {
+        // ✅ 用 Button 才能点
+        Button("OK", role: .cancel) {
+            viewModel.presentError = false   // 也可以留空，系统自动关
+        }
+    } message: {
+        Text("There was an issue fetching some of your data. "
+             + "Some health tracking requires an Apple Watch.")
+    }
+        
   }
 }
 
