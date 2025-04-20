@@ -46,4 +46,26 @@ class ProfileViewModel: ObservableObject {
         UserDefaults.standard.set(profileImage, forKey: "profileImage")
         dismissEdit()
     }
+    
+    func presentEmailApp() {
+        let emailSubject = "Fitness App - Contact Us"
+        let emailRecipient = "robinmai@gmail,com"
+        
+        let encodedSubject = 
+        emailSubject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let encodedRecipient = emailRecipient.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        
+        let urlString = "mailto:\(encodedRecipient)?subject=\(encodedSubject)"
+        
+        guard let url = URL(string: urlString) else {
+            return
+        }
+        
+        if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        } else {
+            return
+        }
+        
+    }
 }

@@ -141,15 +141,33 @@ struct ProfileView: View {
             
             VStack {
                 
-                FitnessProfileItemButton(title: "Contact US",image: "envelope") {
-                    print("Contact US")
+                FitnessProfileItemButton(title: "Contact US", image: "envelope") {
+                    viewModel.presentEmailApp()
                 }
-                FitnessProfileItemButton(title: "Privacy Policy",image: "doc") {
-                    print("Privacy Policy")
+                
+                Link(destination: URL(string: "https://github.com/Maimai10808/Fitness-App")!) {
+                    HStack {
+                        Image(systemName: "doc")
+                        
+                        Text("Privacy Policy")
+                    }
+                    .foregroundStyle(.primary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                FitnessProfileItemButton(title: "Terms of Service",image: "doc") {
-                    print("Terms of Service")
+                
+                Link(destination: URL(string: "https://github.com/Maimai10808/Fitness-App")!) {
+                    HStack {
+                        Image(systemName: "doc")
+                        
+                        Text("Terms of Service")
+                    }
+                    .foregroundStyle(.primary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                
+                
                 
             }
             .background(
