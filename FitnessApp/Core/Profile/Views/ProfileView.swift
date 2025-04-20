@@ -138,6 +138,7 @@ struct ProfileView: View {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(.gray.opacity(0.25))
             )
+            .padding(.top)
             
             VStack {
                 
