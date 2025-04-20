@@ -346,6 +346,42 @@ extension HealthManager {
         healthStore.execute(query)
     }
     
+    /// 通用：取最近 N 天的 DailyStepModel 数组
+    func fetchStepData(forLast days: Int,
+                               completion: @escaping ([DailyStepModel]) -> Void)
+    {
+        let stepsType = HKQuantityType(.stepCount)
+        guard let startDate = Calendar.current.date(byAdding: .day, value: -days + 1, to: Date()) else {
+            completion([]); return
+        }
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: Date())
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepsType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum,
+            anchorDate: startDate,
+            intervalComponents: DateComponents(day: 1)
+        )
+
+        query.initialResultsHandler = { _, results, error in
+            guard error == nil, let results else { completion([]); return }
+
+            var models: [DailyStepModel] = []
+            results.enumerateStatistics(from: startDate, to: Date()) { stat, _ in
+                if let q = stat.sumQuantity() {
+                    models.append(
+                        DailyStepModel(date: stat.startDate,
+                                       count: Int(q.doubleValue(for: .count())))
+                    )
+                }
+            }
+            DispatchQueue.main.async { completion(models.sorted { $0.date < $1.date }) }
+        }
+
+        healthStore.execute(query)
+    }
+    
     
 }
 

@@ -6,20 +6,13 @@
 //
 
 import Foundation
+import HealthKit
 
 class ChartsViewModel: ObservableObject {
     @Published var chartData: [DailyStepModel] = []
     private let healthManager = HealthManager.shared
 
-    @Published var mockWeekChartData = [
-        DailyStepModel(date: Date(), count: 12315),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(), count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date(), count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date(), count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -4, to: Date()) ?? Date(), count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -5, to: Date()) ?? Date(), count: 9775),
-        DailyStepModel(date: Calendar.current.date(byAdding: .day, value: -6, to: Date()) ?? Date(), count: 9775),
-    ]
+    
     @Published var oneWeekAverage = 0
     @Published var oneWeekTotal = 0
     
@@ -39,19 +32,33 @@ class ChartsViewModel: ObservableObject {
     @Published var oneYearAverage = 0
     @Published var oneYearTotal = 0
     
+    @Published var presentError = false
+    
     
     init() {
-        // 生成最近 30 天 和 90 天的数据
-        let oneMonth = mockDataForDays(days: 30)
-        let threeMonth = mockDataForDays(days: 90)
-        
-        DispatchQueue.main.async {
-            self.mockOneMonthData = oneMonth
-            self.mockThreeMonthData = threeMonth
+        Task {
+            do {
+                // 1️⃣ 申请 HealthKit 读取权限
+                try await healthManager.requestHealthKitAccess()
+
+                // 2️⃣ 给系统一点时间完成授权（可视情况调整或去掉）
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+
+                // 3️⃣ 并发抓取最近一周 / 一月 / 三月 / YTD&12个月 数据
+                async let week : () = fetchOneWeekStepData()
+                async let month: () = fetchOneMonthStepData()
+                async let quarter = fetchThreeMonthsStepData()
+                async let yearData = fetchYTDAndOneYearChartData()
+
+                // 等待全部完成；如果任一抛错，会被 catch 捕获
+                _ = try await (week, month, quarter, yearData)
+
+            } catch {
+                // 授权失败或任何抓取错误 → 弹窗提示
+                await MainActor.run { self.presentError = true }
+                print("Charts fetch error:", error)
+            }
         }
-        
-        fetchWeeklySteps()
-        fetchYTDAndOneYearChartData()
     }
     
     func mockDataForDays(days: Int) -> [DailyStepModel] {
@@ -65,37 +72,83 @@ class ChartsViewModel: ObservableObject {
         return data.sorted { $0.date < $1.date }
     }
     
-    func fetchWeeklySteps() {
-        healthManager.fetchWeeklySteps { [weak self] result in
-            DispatchQueue.main.async {
+    // MARK: - 最近 7 天
+    func fetchOneWeekStepData() async throws {
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            healthManager.fetchWeeklySteps { [weak self] result in
+                guard let self else { return c.resume(throwing: URLError(.badServerResponse)) }
+
                 switch result {
-                case .success(let steps):
-                    self?.chartData = steps
+                case .success(let weekData):
+                    DispatchQueue.main.async {
+                        self.chartData      = weekData.sorted { $0.date < $1.date }
+                        self.oneWeekTotal   = self.chartData.reduce(0) { $0 + $1.count }
+                        self.oneWeekAverage = self.oneWeekTotal / 7
+                        c.resume(returning: ())
+                    }
                 case .failure(let error):
-                    print("Error fetching weekly steps: \(error.localizedDescription)")
+                    c.resume(throwing: error)
                 }
             }
         }
     }
-    
-    func fetchYTDAndOneYearChartData() {
-        healthManager.fetchYTDAndOneYearChartData { result in
-            switch result {
-            case .success(let result):
+
+    // MARK: - 最近 30 天
+    func fetchOneMonthStepData() async throws {
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            healthManager.fetchStepData(forLast: 30) { [weak self] data in
+                guard let self else { return c.resume(throwing: URLError(.badServerResponse)) }
+
                 DispatchQueue.main.async {
-                    self.ytdChartData = result.ytd
-                    self.oneYearChartData = result.oneYear
-                    
-                    self.ytdTotal = self.ytdChartData.reduce(0, { $0 + $1.count})
-                    self.oneYearTotal = self.oneYearChartData.reduce(0, { $0 + $1.count})
-                    
-                    self.ytdAverage = self.ytdTotal / Calendar.current.component(.month, from: Date())
-                    self.oneYearAverage = self.oneYearTotal / 12
+                    self.mockOneMonthData = data
+                    self.oneMonthTotal    = data.reduce(0) { $0 + $1.count }
+                    self.oneMonthAverage  = self.oneMonthTotal / 30
+                    c.resume(returning: ())
                 }
-            case .failure(let error):
-                print("Error fetching YTDAndOneYearChartData : \(error.localizedDescription)")
             }
-            
+        }
+    }
+
+    // MARK: - 最近 90 天
+    func fetchThreeMonthsStepData() async throws {
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            healthManager.fetchStepData(forLast: 90) { [weak self] data in
+                guard let self else { return c.resume(throwing: URLError(.badServerResponse)) }
+
+                DispatchQueue.main.async {
+                    self.mockThreeMonthData = data
+                    self.threeMonthTotal    = data.reduce(0) { $0 + $1.count }
+                    self.threeMonthAverage  = self.threeMonthTotal / 90
+                    c.resume(returning: ())
+                }
+            }
+        }
+    }
+
+    // MARK: - 年内 / 近 12 个月
+    func fetchYTDAndOneYearChartData() async throws {
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            healthManager.fetchYTDAndOneYearChartData { [weak self] result in
+                guard let self else { return c.resume(throwing: URLError(.badServerResponse)) }
+
+                switch result {
+                case .success(let data):
+                    DispatchQueue.main.async {
+                        self.ytdChartData     = data.ytd
+                        self.oneYearChartData = data.oneYear
+
+                        self.ytdTotal     = self.ytdChartData.reduce(0) { $0 + $1.count }
+                        self.oneYearTotal = self.oneYearChartData.reduce(0) { $0 + $1.count }
+
+                        self.ytdAverage   = self.ytdTotal / Calendar.current.component(.month, from: Date())
+                        self.oneYearAverage = self.oneYearTotal / 12
+
+                        c.resume(returning: ())
+                    }
+                case .failure(let error):
+                    c.resume(throwing: error)
+                }
+            }
         }
     }
     
