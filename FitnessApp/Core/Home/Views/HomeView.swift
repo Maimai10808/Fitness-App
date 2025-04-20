@@ -100,7 +100,7 @@ struct HomeView: View {
                     Spacer()
                     
                     Button {
-                        print("show more")
+                        AlertPresenter.presentAlert(title: "Oops", message: "Under Construction ")
                     } label: {
                         Text("Show more")
                             .padding(.all, 10)

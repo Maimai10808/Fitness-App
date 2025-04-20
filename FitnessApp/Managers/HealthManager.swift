@@ -7,12 +7,14 @@
 
 import Foundation
 import HealthKit
+import UIKit
 
 class HealthManager {
     
     static let shared = HealthManager()
     
     let healthStore = HKHealthStore()
+    
     
     private init() {
         
@@ -21,7 +23,9 @@ class HealthManager {
             do {
                 try await requestHealthKitAccess()
             } catch {
-                print(error.localizedDescription)
+                DispatchQueue.main.async {
+                    AlertPresenter.presentAlert(title: "Oops", message: "We were unable to access health data. Please allow access to enjoy the app.")
+                }
             }
         }
     }
@@ -385,4 +389,3 @@ extension HealthManager {
     
 }
 
-    
