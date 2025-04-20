@@ -17,7 +17,7 @@ struct Activity {
     let amount: String
 }
 
-struct Workout {
+struct Workout: Identifiable, Hashable  {
     let id = UUID()
     let title: String
     let image: String

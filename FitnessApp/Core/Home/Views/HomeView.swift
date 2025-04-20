@@ -12,6 +12,13 @@ struct HomeView: View {
     
     @StateObject var viewModel = HomeViewModel()
     
+    @State var isPremium = false
+    @State var showPaywall = false
+    @State var activitiesAmount = 4
+    @State var showAllActivities = false
+    
+    
+    
     var body: some View {
     NavigationStack {
         ScrollView(showsIndicators: false) {
@@ -100,7 +107,23 @@ struct HomeView: View {
                     Spacer()
                     
                     Button {
-                        AlertPresenter.presentAlert(title: "Oops", message: "Under Construction ")
+                        
+                        if isPremium {
+                            
+                            showAllActivities.toggle()
+                            
+                            if showAllActivities {
+                                AlertPresenter.presentAlert(title: "Remind", message: " Have got access")
+                            } else {
+                                AlertPresenter.presentAlert(title: "Remind", message: " Have limited access")
+                            }
+                            
+                        } else {
+                            showPaywall = true
+                        }
+                        
+                        
+                        
                     } label: {
                         Text("Show more")
                             .padding(.all, 10)
@@ -111,13 +134,16 @@ struct HomeView: View {
                 }
                 .padding(.horizontal)
                 
-                LazyVGrid(columns: Array(repeating: GridItem(spacing: 20), count: 2)) {
-                    ForEach(viewModel.activities, id: \.title) {
-                        activity in
-                        ActivityCard(activity: activity)
+                if !viewModel.activities.isEmpty {
+                    LazyVGrid(columns: Array(repeating: GridItem(spacing: 20), count: 2)) {
+                        ForEach(viewModel.activities.prefix(showAllActivities == true ? 8 : 4 ), id: \.title) {
+                            activity in
+                            ActivityCard(activity: activity)
+                        }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
+                
                 
                 HStack {
                     Text("Recent Workouts")
@@ -125,15 +151,29 @@ struct HomeView: View {
                     
                     Spacer()
                     
-                    NavigationLink {
-                        EmptyView()
-                    } label: {
-                        Text("Show more")
-                            .padding(.all, 10)
-                            .foregroundStyle(.white)
-                            .background(.blue)
-                            .cornerRadius(20)
+                    if isPremium {
+                        NavigationLink {
+                            MonthWorkoutsView()
+                        } label: {
+                            Text("Show more")
+                                .padding(.all, 10)
+                                .foregroundStyle(.white)
+                                .background(.blue)
+                                .cornerRadius(20)
+                        }
+                    } else {
+                        Button {
+                            showPaywall = true
+                        } label: {
+                            Text("Show more")
+                                .padding(.all, 10)
+                                .foregroundStyle(.white)
+                                .foregroundStyle(.white)
+                                .background(.blue)
+                                .cornerRadius(20)
+                        }
                     }
+                    
                     
                 }
                 .padding(.horizontal)
