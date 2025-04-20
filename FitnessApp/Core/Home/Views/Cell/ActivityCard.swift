@@ -27,7 +27,7 @@ struct ActivityCard: View {
                         .foregroundStyle(activity.tintColor)
                 }
                 
-                Text("\(activity.amount) mins")
+                Text(activity.amount)
                     .font(.title)
                     .bold()
                     .padding()
