@@ -5,86 +5,65 @@
 //  Created by mac on 4/11/25.
 //
 
+
 import SwiftUI
 import Foundation
 
-class LeaderboardViewModel: ObservableObject {
+@MainActor                    // 👈 让整个类默认运行在主执行域
+final class LeaderboardViewModel: ObservableObject {
     
-    @Published var leaderResult = LeaderboardResult(user: nil, top10: [])
+    @Published var showAlert      = false
+    @Published var leaderResult   = LeaderboardResult(user: nil, top10: [])
     
+    // MARK: - Life cycle
     init() {
+        setupLeaderboardData()
+    }
+    
+    // MARK: - Public async helper
+    /// 包装真正的加载流程；自己 catch 错误 → 更新 UI
+    func setupLeaderboardData() {
         Task {
             do {
-                try await setupLeaderboardData()
-
+                try await postStepCountUpdateForUser()
+                leaderResult = try await fetchLeaderboards()     // ← 拼写也修正
             } catch {
-                print(error.localizedDescription)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.showAlert = true
+                }
+            }
+        }
+        
+        // MARK: - Data layer
+        func fetchLeaderboards() async throws -> LeaderboardResult {
+            let leaders = try await DatabaseManager.shared.fetchLeaderboards()
+            let top10   = Array(leaders.sorted { $0.count > $1.count }.prefix(10))
+            
+            if let stored = UserDefaults.standard.string(forKey: "username")?.lowercased(),
+               let currentUser = leaders.first(where: { $0.username.lowercased() == stored }) {
+                return LeaderboardResult(user: currentUser, top10: top10)
+            } else {
+                return LeaderboardResult(user: nil, top10: top10)
+            }
+        }
+        
+        func postStepCountUpdateForUser() async throws {
+            guard let username = UserDefaults.standard.string(forKey: "username") else {
+                throw URLError(.badURL)      // 自定义更合适的错误也行
+            }
+            let steps = try await fetchCurrentWeekStepCount()
+            try await DatabaseManager.shared
+                .postStepCountUpdateFor(leader: LeaderboardUser(username: username,
+                                                                count: Int(steps)))
+        }
+        
+        func fetchCurrentWeekStepCount() async throws -> Double {
+            try await withCheckedThrowingContinuation { cont in
+                HealthManager.shared.fetchCurrentWeekStepCount { result in
+                    cont.resume(with: result)
+                }
             }
         }
     }
-    
-    func setupLeaderboardData() async throws {
-        try await postStepCountUpdateForUser()
-        let result = try await fetchLeaerboards()
-        DispatchQueue.main.async {
-            self.leaderResult = result
-        }
-    }
-    
-    // fetch
-    private func fetchLeaerboards() async throws -> LeaderboardResult {
-        let leaders = try await DatabaseManager.shared.fetchLeaderboards()
-        print("Leaders data: \(leaders)")
-        
-        // 排序并获取前10
-        let top10 = Array(leaders.sorted(by: { $0.count > $1.count }).prefix(10))
-        let username = UserDefaults.standard.string(forKey: "username")
-        print("Stored username: \(String(describing: username))")
-        
-        // 确保比较时忽略大小写
-        if let username = username?.lowercased() {
-            // 查找所有用户而不仅仅是top10
-            let user = leaders.first(where: { $0.username.lowercased() == username })
-            print("Found user: \(String(describing: user?.username))")
-            return LeaderboardResult(user: user, top10: top10)
-        } else {
-            print("No user data found")
-            return LeaderboardResult(user: nil, top10: top10)
-        }
-    }
-    // update
-    private func postStepCountUpdateForUser() async throws {
-        guard let username = UserDefaults.standard.string(forKey: "username") else {
-            throw URLError(.badURL)
-        }
-        let steps = try await fetchCurrentWeekStepCount()
-        try await DatabaseManager.shared.postStepCountUpdateFor(leader: LeaderboardUser(username: username, count: Int(steps)))
-    }
-    
-    
-    private func fetchCurrentWeekStepCount() async throws -> Double {
-        try await withCheckedThrowingContinuation({ continuation in
-            HealthManager.shared.fetchCurrentWeekStepCount { result in
-                continuation.resume(with: result)
-            }
-        })
-    }
-    
-    var mockData = [
-        LeaderboardUser(username: "jason", count: 4124),
-        LeaderboardUser(username: "you", count: 4532),
-        LeaderboardUser(username: "seanallen", count: 3432),
-        LeaderboardUser(username: "paul hudson", count: 5678),
-        LeaderboardUser(username: "catalin", count: 6896),
-        LeaderboardUser(username: "robin", count: 2345),
-        LeaderboardUser(username: "logan", count: 5675),
-        LeaderboardUser(username: "jason", count: 4124),
-        LeaderboardUser(username: "you", count: 4532),
-        LeaderboardUser(username: "seanallen", count: 3432),
-        LeaderboardUser( username: "paul hudson", count: 5678),
-        LeaderboardUser( username: "catalin", count: 6896),
-        LeaderboardUser( username: "robin", count: 2345),
-        LeaderboardUser( username: "logan", count: 5675)
-    ]
-    
 }

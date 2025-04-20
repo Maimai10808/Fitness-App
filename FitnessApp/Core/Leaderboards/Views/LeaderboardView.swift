@@ -18,9 +18,25 @@ struct LeaderboardView: View {
     var body: some View {
         ZStack {
             VStack {
-                Text("Leaderboard")
-                    .font(.largeTitle)
-                    .bold()
+                ZStack(alignment: .trailing) {
+                    Text("Leaderboard")
+                        .font(.largeTitle)
+                        .bold()
+                        .frame(maxWidth: .infinity)
+                    
+                    Button {
+                        viewModel.setupLeaderboardData()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .resizable()
+                            .scaledToFit()
+                            .bold()
+                            .foregroundStyle(Color(uiColor: .label))
+                            .frame(width: 28, height: 28)
+                            .padding(.trailing)
+                    }
+                }
+                
                 
                 HStack {
                     Text("Name")
@@ -80,6 +96,16 @@ struct LeaderboardView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .alert("Oops",
+                   isPresented: $viewModel.showAlert) {
+                // ✅ 用 Button 才能点
+                Button("OK", role: .cancel) {
+                    viewModel.showAlert = false   // 也可以留空，系统自动关
+                }
+            } message: {
+                Text("There was an issue fetching some of your data. "
+                     + "Some health tracking requires an Apple Watch.")
+            }
             
             if showTerms {
                 Color.white
@@ -90,14 +116,7 @@ struct LeaderboardView: View {
         }
         .onChange(of: showTerms) { _ in
             if !showTerms && username != nil {
-                Task {
-                    do {
-                        try await viewModel.setupLeaderboardData()
-                        
-                    } catch {
-                        print(error.localizedDescription)
-                    }
-                }
+                viewModel.setupLeaderboardData()
             }
             
         }

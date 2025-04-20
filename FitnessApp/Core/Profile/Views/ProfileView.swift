@@ -179,6 +179,15 @@ struct ProfileView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .alert("Oops",
+               isPresented: $viewModel.showAlert) {
+            // ✅ 用 Button 才能点
+            Button("OK", role: .cancel) {
+                viewModel.showAlert = false   // 也可以留空，系统自动关
+            }
+        } message: {
+            Text("We were unable to open your mail application. Please make sure you have one installed.")
+        }
         .onAppear {
             viewModel.selectedImage = viewModel.profileImage
         }

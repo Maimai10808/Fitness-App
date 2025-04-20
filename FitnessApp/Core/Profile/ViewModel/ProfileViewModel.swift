@@ -22,6 +22,8 @@ class ProfileViewModel: ObservableObject {
 
     @Published var isEditingName  = false
     @Published var isEditingImage = false
+    
+    @Published var showAlert = false
 
     let images = (1...10).map { "avatar \($0)" }
 
@@ -64,7 +66,10 @@ class ProfileViewModel: ObservableObject {
         if UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
         } else {
-            return
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.showAlert = true
+            }
         }
         
     }
