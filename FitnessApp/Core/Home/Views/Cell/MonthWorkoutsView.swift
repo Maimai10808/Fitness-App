@@ -64,6 +64,14 @@ struct MonthWorkoutsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding()
+        .onChange(of: viewModel.selectedMonth) { _ in
+            viewModel.updateSelectedDate()
+        }
+        .alert("Oops", isPresented: $viewModel.showAlert) {
+            Text("Ok")
+        } message: {
+            Text("Unable to load workouts for \(viewModel.selectedDate.monthAndYearFormat()). Please make sure you have workouts for the selected month and try again ")
+        }
     }
 }
 

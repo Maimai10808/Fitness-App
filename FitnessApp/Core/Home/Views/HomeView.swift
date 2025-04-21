@@ -12,7 +12,7 @@ struct HomeView: View {
     
     @StateObject var viewModel = HomeViewModel()
     
-    @State var isPremium = false
+    @State var isPremium = true
     @State var showPaywall = false
     @State var activitiesAmount = 4
     @State var showAllActivities = false

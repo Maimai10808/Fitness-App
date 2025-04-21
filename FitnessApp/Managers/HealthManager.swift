@@ -176,7 +176,7 @@ class HealthManager {
                 return
             }
             
-            let workoutsArray = workouts.map( { Workout(title: $0.workoutActivityType.name, image: $0.workoutActivityType.image, duration: "\(Int($0.duration) / 60 ) mins", date: $0.startDate.formatWorkoutDate(), calories: $0.totalEnergyBurned?.doubleValue(for: .kilocalorie()).formatted() ?? "-", tintColor: $0.workoutActivityType.color)})
+            let workoutsArray = workouts.map( { Workout(title: $0.workoutActivityType.name, image: $0.workoutActivityType.image, duration: "\(Int($0.duration) / 60 ) mins", date: $0.startDate, calories: $0.totalEnergyBurned?.doubleValue(for: .kilocalorie()).formatted() ?? "-", tintColor: $0.workoutActivityType.color)})
             
             completion(.success(workoutsArray))
         }
